@@ -1,0 +1,71 @@
+from config import TOKEN
+import telebot
+import random
+
+bot = telebot.TeleBot(TOKEN)
+
+class Car:
+    def __init__(self, color="неизвестен", brand="неизвестна"):
+        self.color = color
+        self.brand = brand
+        
+    def info(self):
+        return f"🚗 Машина: {self.brand}\nЦвет: {self.color}"
+
+@bot.message_handler(commands=['start', 'help'])
+def send_welcome(message):
+    text = """
+👋 Привет! Я многофункциональный бот Петрушка🍀. Вот что умею:
+/joke - Случайная шутка
+/quote - Мудрая цитата
+/fact - Интересный факт
+/car [цвет] [марка] - Создать машину
+📸 Отправь фото/голос/файл - Я их обработаю
+    """
+    bot.reply_to(message, text)
+
+jokes = ["Почему программисты предпочитают темный режим? Потому что свет притягивает баги!", 
+         "Что говорит массив словами? String!"]
+
+@bot.message_handler(commands=['joke'])
+def send_joke(message):
+    bot.reply_to(message, random.choice(jokes))
+
+quotes = ["«Сложность враг исполнения» — Тони Шей", 
+         "«Преждевременная оптимизация — корень всех зол» — Дональд Кнут"]
+
+@bot.message_handler(commands=['quote'])
+def send_quote(message):
+    bot.reply_to(message, random.choice(quotes))
+
+facts = ["Медузы на 95% состоят из воды", 
+        "Венера единственная планета, вращающаяся против часовой стрелки"]
+
+@bot.message_handler(commands=['fact'])
+def send_fact(message):
+    bot.reply_to(message, random.choice(facts))
+
+@bot.message_handler(commands=['car'])
+def create_car(message):
+    args = telebot.util.extract_arguments(message.text).split()
+    
+    if len(args) < 2:
+        bot.reply_to(message, "❌ Укажите цвет и марку через пробел: /car красный Toyota")
+        return
+        
+    car = Car(color=args[0], brand=args[1])
+    bot.reply_to(message, car.info())
+
+@bot.message_handler(content_types=['photo'])
+def handle_photo(message):
+    bot.reply_to(message, "📸 Крутое фото! Сохранил его в базе")
+
+@bot.message_handler(content_types=['voice'])
+def handle_voice(message):
+    bot.reply_to(message, "🎤 Голосовое сообщение получено. Длительность: {} сек".format(message.voice.duration))
+
+@bot.message_handler(content_types=['document'])
+def handle_file(message):
+    bot.reply_to(message, "📄 Файл '{}' успешно загружен!".format(message.document.file_name))
+
+bot.infinity_polling()
